@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRECT_KEY')
+SECRET_KEY = 'django-insecure-$3mqzjl#^45^#7ioqa)=2lfe3v(d3kz#bq_ly+zh5_80kp!%d('
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -119,8 +119,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'NOBSMART API',
-    'DESCRIPTION': 'Topplug254 platform API',
+    'TITLE': 'CONVINIENT.STORE API',
+    'DESCRIPTION': 'Convinient.store platform API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,

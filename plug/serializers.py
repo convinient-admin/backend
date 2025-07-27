@@ -20,13 +20,15 @@ from .models import (
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    profile_picture = serializers.URLField(required=False, allow_blank=True)  # Optional field
     
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'username', 'email', 'password', 
+            'id', 'username', 'email', 'password',
             'user_type', 'phone', 'company_name',
-            'first_name', 'last_name', 'date_joined'
+            'first_name', 'last_name', 'date_joined',
+            'profile_picture',
         ]
         extra_kwargs = {
             'password': {'write_only': True},
@@ -34,10 +36,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        # Hash the password before creating user
         validated_data['password'] = make_password(validated_data.get('password'))
         return super().create(validated_data)
-    
 
+    def update(self, instance, validated_data):
+        # Hash the password if it is supplied during update
+        password = validated_data.pop('password', None)
+        if password:
+            instance.password = make_password(password)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+    
 
 class StoreSerializer(serializers.ModelSerializer):
     class Meta:

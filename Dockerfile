@@ -31,4 +31,4 @@ RUN python manage.py collectstatic --noinput
 EXPOSE 8000
 
 # Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "TP254.wsgi:application"]
+CMD ["sh", "-c", "python manage.py migrate && exec gunicorn --bind 0.0.0.0:8000 TP254.wsgi:application"]

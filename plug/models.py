@@ -15,7 +15,10 @@ class CustomUser(AbstractUser):
     is_verified = models.BooleanField(default=False)
     auth_provider = models.CharField(max_length=20, default='email')
     email_verification_token = models.CharField(max_length=100, blank=True, null=True)
-    
+
+    # New optional profile_picture field
+    profile_picture = models.URLField(blank=True, null=True)
+
     # Fix for reverse accessor clashes
     groups = models.ManyToManyField(
         'auth.Group',

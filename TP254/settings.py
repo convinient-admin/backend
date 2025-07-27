@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -85,19 +86,12 @@ WSGI_APPLICATION = 'TP254.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('HOST_NAME'),  # Changed from 'db' to 'localhost'
-        'PORT': '5432',  # Default PostgreSQL port
-
-        
-    }
-       
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,  # Si lazima : keeps connections open for better performance
+        ssl_require=True   # Render Postgres usually requires SSL
+    )
 }
-
 
 
 # Password validation

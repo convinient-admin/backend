@@ -14,6 +14,9 @@ from pathlib import Path
 import os
 from datetime import timedelta
 import dj_database_url
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file as early as possible
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -84,6 +87,8 @@ WSGI_APPLICATION = 'TP254.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+load_dotenv()  # Load environment variables from .env file
 
 DATABASES = {
     'default': dj_database_url.config(

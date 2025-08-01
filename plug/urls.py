@@ -12,6 +12,7 @@ from drf_spectacular.views import (
 )
 
 from . import views
+from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
 
 # ========== Initialize Router ==========
 router = DefaultRouter()
@@ -63,7 +64,12 @@ urlpatterns = [
     path('api/', include(router.urls)),
     
     # Authentication
-  
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('auth/signin/', SignInView.as_view(), name='signin'),
+    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
+    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+    # path('auth/login/', LoginView.as_view(), name='login'),
+
     # Public Endpoints
     path('api/public/stores/<str:domain>/products/', views.PublicProductListView.as_view(), name='public-products'),
     path('api/public/stores/<str:domain>/products/<int:pk>/', views.PublicProductDetailView.as_view(), name='public-product-detail'),

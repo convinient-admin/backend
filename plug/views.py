@@ -62,7 +62,42 @@ class SignUpView(generics.GenericAPIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class VerifyEmailView(generics.GenericAPIView):
+from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+
+urlpatterns = [
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('auth/signin/', SignInView.as_view(), name='signin'),
+    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
+    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+
+urlpatterns = [
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('auth/signin/', SignInView.as_view(), name='signin'),
+    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
+    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+
+urlpatterns = [
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('auth/signin/', SignInView.as_view(), name='signin'),
+    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
+    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+
+urlpatterns = [
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('auth/signin/', SignInView.as_view(), name='signin'),
+    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
+    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+
+urlpatterns = [
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('auth/signin/', SignInView.as_view(), name='signin'),
+    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
+    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+]class VerifyEmailView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomUserSerializer
 

@@ -62,35 +62,6 @@ class SignUpView(generics.GenericAPIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class SignInView(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = CustomUserSerializer
-
-    def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        user = authenticate(request, username=email, password=password)
-        
-        if user is not None:
-            if not user.is_verified:
-                return Response(
-                    {'error': 'Please verify your email before logging in.'},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': self.get_serializer(user).data
-            })
-        else:
-            return Response(
-                {'error': 'Invalid credentials'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
 class VerifyEmailView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomUserSerializer

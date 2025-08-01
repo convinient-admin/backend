@@ -25,7 +25,7 @@ RUN pip install --upgrade pip && \
 COPY . .
 
 # Collect static files (if needed)
-RUN python manage.py collectstatic --noinput
+RUN python [manage.py](http://_vscodecontentref_/3) collectstatic --noinput
 
 # Expose the port
 EXPOSE 8000

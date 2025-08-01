@@ -52,7 +52,7 @@ urlpatterns = [
     path('api/auth/signin/', views.SignInView.as_view(), name='signin'),
     path('api/auth/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
     path('api/auth/me/', views.UserProfileView.as_view(), name='user-profile'),
-    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/google/signin/', views.GoogleAuthView.as_view(), name='google-signin'),
     path('api/auth/google/signup/', views.GoogleAuthView.as_view(), name='google-signup'),
@@ -63,11 +63,7 @@ urlpatterns = [
     # API
     path('api/', include(router.urls)),
     
-    # Authentication
-    path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('auth/signin/', SignInView.as_view(), name='signin'),
-    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
-    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
+   
     # path('auth/login/', LoginView.as_view(), name='login'),
 
     # Public Endpoints

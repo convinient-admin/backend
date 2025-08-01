@@ -62,42 +62,36 @@ class SignUpView(generics.GenericAPIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+class SignInView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CustomUserSerializer
 
-urlpatterns = [
-    path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('auth/signin/', SignInView.as_view(), name='signin'),
-    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
-    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
-]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        user = authenticate(request, username=email, password=password)
+        
+        if user is not None:
+            if not user.is_verified:
+                return Response(
+                    {'error': 'Please verify your email before logging in.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': self.get_serializer(user).data
+            })
+        else:
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
-urlpatterns = [
-    path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('auth/signin/', SignInView.as_view(), name='signin'),
-    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
-    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
-]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
-
-urlpatterns = [
-    path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('auth/signin/', SignInView.as_view(), name='signin'),
-    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
-    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
-]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
-
-urlpatterns = [
-    path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('auth/signin/', SignInView.as_view(), name='signin'),
-    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
-    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
-]from .views import SignUpView, SignInView, GoogleSignUpView, GoogleSignInView
-
-urlpatterns = [
-    path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('auth/signin/', SignInView.as_view(), name='signin'),
-    path('auth/google/signup/', GoogleSignUpView.as_view(), name='google-signup'),
-    path('auth/google/signin/', GoogleSignInView.as_view(), name='google-signin'),
-]class VerifyEmailView(generics.GenericAPIView):
+class VerifyEmailView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomUserSerializer
 

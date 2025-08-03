@@ -189,13 +189,15 @@ RESEND_SMTP_HOST = 'smtp.resend.com'
 FRONTEND_URL = 'http://localhost:3000'
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_ALL_ORIGINS = False  # Set to False for production
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React development server
+    "https://convinientshop.vercel.app",  # Production frontend
+    "http://localhost:3000",              # Local development
     "http://127.0.0.1:3000",
 ]
 CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://convinientshop\.vercel\.app$",
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
 ]

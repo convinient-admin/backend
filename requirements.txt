@@ -23,7 +23,6 @@ drf-spectacular==0.28.0
 drf-yasg==1.21.10
 executing==2.2.0
 google-auth==2.40.3
-gunicorn==22.0.0
 idna==3.10
 inflection==0.5.1
 ipykernel==6.29.5
@@ -54,7 +53,7 @@ PyJWT==2.9.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 pytz==2025.2
-# pywin32==310
+pywin32==310
 PyYAML==6.0.2
 pyzmq==26.4.0
 referencing==0.36.2
@@ -71,4 +70,3 @@ tzdata==2025.2
 uritemplate==4.1.1
 urllib3==2.5.0
 wcwidth==0.2.13
-whitenoise==6.6.0

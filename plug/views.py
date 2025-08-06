@@ -418,34 +418,31 @@ class PublicOrderCreateView(generics.CreateAPIView):
         store = get_object_or_404(Store, domain=store_domain, is_active=True)
         serializer.save(store=store, status='pending')
 
+
 class GoogleAuthView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomUserSerializer
 
     def post(self, request):
-        try:
-            # Get the token from the request
-            token = request.data.get('access_token')  # Changed from 'token' to 'access_token'
-            
-            # Get user info from Google
-            response = requests.get(
-                'https://www.googleapis.com/oauth2/v3/userinfo',
-                headers={'Authorization': f'Bearer {token}'}
+        token = request.data.get('id_token')
+        if not token:
+            return Response(
+                {'error': 'ID token is required.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-            
-            if response.status_code != 200:
-                return Response(
-                    {'error': 'Failed to get user info from Google'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
-            user_info = response.json()
-            email = user_info['email']
-            first_name = user_info.get('given_name', '')
-            last_name = user_info.get('family_name', '')
-            picture = user_info.get('picture', '')
-            
-            # Check if user exists
+        try:
+            # Verify the ID token
+            idinfo = id_token.verify_oauth2_token(
+                token, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+            )
+
+            email = idinfo['email']
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+            picture = idinfo.get('picture', '')
+
+            # Check if user exists, or create a new one
             try:
                 user = CustomUser.objects.get(email=email)
                 # Update user info if needed
@@ -455,9 +452,10 @@ class GoogleAuthView(generics.GenericAPIView):
                     user.last_name = last_name
                 if not user.profile_picture:
                     user.profile_picture = picture
+                user.auth_provider = 'google' # Ensure auth_provider is set
+                user.is_verified = True # Ensure user is verified
                 user.save()
             except CustomUser.DoesNotExist:
-                # Create new user if doesn't exist
                 user = CustomUser.objects.create(
                     email=email,
                     first_name=first_name,
@@ -466,21 +464,28 @@ class GoogleAuthView(generics.GenericAPIView):
                     is_verified=True,  # Google emails are pre-verified
                     auth_provider='google'
                 )
-                user.set_unusable_password()  # Since they'll use Google to login
+                user.set_unusable_password()
                 user.save()
 
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
-            
+
             return Response({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'user': self.get_serializer(user).data,
                 'message': 'Successfully authenticated with Google'
-            })
+            }, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except ValueError:
+            # Invalid token
             return Response(
-                {'error': str(e)},
+                {'error': 'Invalid or expired Google token.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Handle other exceptions
+            return Response(
+                {'error': f'An unexpected error occurred: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

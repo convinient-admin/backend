@@ -154,7 +154,7 @@ def send_verification_email(request):
             host=settings.RESEND_SMTP_HOST,
             port=settings.RESEND_SMTP_PORT,
             username=settings.RESEND_SMTP_USERNAME,
-            password=os.environ.get("RESEND_API_KEY"),
+            password=os.getenv("RESEND_API_KEY"),
             use_tls=True,
         ) as connection:
             email = EmailMessage(

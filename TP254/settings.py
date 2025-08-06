@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -92,7 +92,7 @@ load_dotenv()  # Load environment variables from .env file
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=600,  # Si lazima : keeps connections open for better performance
         ssl_require=True   # Render Postgres usually requires SSL
     )
@@ -151,8 +151,8 @@ REST_FRAMEWORK = {
 
 }
 
-GOOGLE_CLIENT_ID = os.environ.get('NEXT_PUBLIC_GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_CLIENT_ID = os.getenv('NEXT_PUBLIC_GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

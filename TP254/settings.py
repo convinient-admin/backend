@@ -95,7 +95,7 @@ load_dotenv()  # Load environment variables from .env file
 DATABASES = {
     'default': dj_database_url.config(
         # default=os.getenv('DATABASE_URL'),
-        default='postgresql://topplug_user:pKrDuZKDgkn1FeoPAlaM7NYhxxxEhoP8@dpg-d1sha8je5dus739nb8j0-a.oregon-postgres.render.com/topplug',
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=600,  # Si lazima : keeps connections open for better performance
         ssl_require=True   # Render Postgres usually requires SSL
     )

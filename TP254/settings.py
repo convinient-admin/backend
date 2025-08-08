@@ -123,8 +123,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'CONVINIENT.STORE API',
-    'DESCRIPTION': 'Convinient.store platform API',
+    'TITLE': 'E-commerce API',
+    'DESCRIPTION': 'E-commerce platform API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,

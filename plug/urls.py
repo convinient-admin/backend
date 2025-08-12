@@ -56,8 +56,8 @@ urlpatterns = [
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/google/signin/', views.GoogleAuthView.as_view(), name='google-signin'),
     path('api/auth/google/signup/', views.GoogleAuthView.as_view(), name='google-signup'),
-    path('api/auth/forgot-password/', views.forgot_password, name='forgot-password'),
-    path('api/auth/reset-password/', views.reset_password, name='reset-password'),
+    path('api/auth/forgot-password/', views.ForgotPasswordView.as_view(), name='forgot-password'),
+    path('api/auth/reset-password/', views.ResetPasswordView.as_view(), name='reset-password'),
     
     # Admin
     path('admin/', admin.site.urls),
@@ -78,9 +78,6 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    path('api/auth/send-verification-email/', views.send_verification_email, name='send-verification-email'),
-    path('api/auth/verify-email/<str:token>/', views.verify_email, name='verify-email'),
-
-
+    path('api/auth/send-verification-email/', views.SendVerificationEmailView.as_view(), name='send-verification-email'),
 
 ]

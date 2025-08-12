@@ -103,7 +103,13 @@ class VerifyEmailView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomUserSerializer
 
-    def get(self, request, token):
+    def get(self, request, token=None):
+        if not token:
+            return Response(
+                {'error': 'Token is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         try:
             user = CustomUser.objects.get(email_verification_token=token)
             user.is_verified = True
@@ -123,72 +129,151 @@ class UserProfileView(generics.GenericAPIView):
     def get(self, request):
         return Response(self.get_serializer(request.user).data)
     
-@api_view(['POST'])
-def send_verification_email(request):
-    email = request.data.get('email')
-    
-    try:
-        user = CustomUser.objects.get(email=email)
-        
-        # Generate verification token if not exists
-        if not user.email_verification_token:
-            user.email_verification_token = str(uuid.uuid4())
-            user.save()
-        
-        # Create verification link
-        verification_url = f"{settings.FRONTEND_URL}/verify-email?token={user.email_verification_token}"
-        
-        subject = "Verify Your Email Address"
+# ===== Password Reset =====
+class ForgotPasswordView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CustomUserSerializer
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'status': 'error', 'message': 'Email is required'}, status=400)
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            # Do not reveal whether the email exists
+            return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
+
+        # Reuse email_verification_token field to store one-time password reset token
+        user.email_verification_token = str(uuid.uuid4())
+        user.save()
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={user.email_verification_token}"
+
+        subject = "Reset Your Password"
         message = f"""
         <html>
         <body>
-            <h2>Welcome to Our Platform!</h2>
-            <p>Please click the link below to verify your email address:</p>
-            <a href="{verification_url}" style="
+            <p>We received a request to reset your password.</p>
+            <p>Click the link below to set a new password:</p>
+            <a href="{reset_url}" style="
                 background-color: #4CAF50;
                 color: white;
                 padding: 10px 20px;
-                text-align: center;
                 text-decoration: none;
-                display: inline-block;
-                border-radius: 5px;
-            ">Verify Email</a>
-            <p>If you didn't request this, please ignore this email.</p>
+                border-radius: 5px;">Reset Password</a>
+            <p>If you did not request this, you can safely ignore this email.</p>
         </body>
         </html>
         """
-        
-        with get_connection(
-            host=settings.RESEND_SMTP_HOST,
-            port=settings.RESEND_SMTP_PORT,
-            username=settings.RESEND_SMTP_USERNAME,
-            password=os.getenv("RESEND_API_KEY"),
-            use_tls=True,
-        ) as connection:
-            email = EmailMessage(
-                subject=subject,
-                body=message,
-                to=[user.email],
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                connection=connection
-            )
-            email.content_subtype = "html"  # Set content type to HTML
-            email.send()
-            
-        return Response({"status": "success", "message": "Verification email sent"})
-    
-    except CustomUser.DoesNotExist:
-        return Response({"status": "error", "message": "User not found"}, status=404)
-@api_view(['GET'])
-def verify_email(request, token):
-    try:
-        user = CustomUser.objects.get(email_verification_token=token)
-        user.is_verified = True
+
+        try:
+            with get_connection(
+                host=settings.RESEND_SMTP_HOST,
+                port=settings.RESEND_SMTP_PORT,
+                username=settings.RESEND_SMTP_USERNAME,
+                password=os.getenv("RESEND_API_KEY"),
+                use_tls=True,
+            ) as connection:
+                email_msg = EmailMessage(
+                    subject=subject,
+                    body=message,
+                    to=[user.email],
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    connection=connection
+                )
+                email_msg.content_subtype = "html"
+                email_msg.send()
+        except Exception:
+            # Still respond success to avoid user enumeration and UX leakage
+            pass
+
+        return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
+
+
+class ResetPasswordView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CustomUserSerializer
+
+    def post(self, request):
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        if not token or not new_password:
+            return Response({'status': 'error', 'message': 'token and new_password are required'}, status=400)
+
+        try:
+            user = CustomUser.objects.get(email_verification_token=token)
+        except CustomUser.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Invalid or expired token'}, status=400)
+
+        # Set new password and clear token
+        user.set_password(new_password)
         user.email_verification_token = None
         user.save()
-        return Response({"status": "success", "message": "Email successfully verified"})
-    except CustomUser.DoesNotExist:
-        return Response({"status": "error", "message": "Invalid verification token"}, status=400)
+
+        return Response({'status': 'success', 'message': 'Password has been reset successfully'})
+
+
+class SendVerificationEmailView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CustomUserSerializer
+
+    def post(self, request):
+        email = request.data.get('email')
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            
+            # Generate verification token if not exists
+            if not user.email_verification_token:
+                user.email_verification_token = str(uuid.uuid4())
+                user.save()
+            
+            # Create verification link
+            verification_url = f"{settings.FRONTEND_URL}/verify-email?token={user.email_verification_token}"
+            
+            subject = "Verify Your Email Address"
+            message = f"""
+            <html>
+            <body>
+                <h2>Welcome to Our Platform!</h2>
+                <p>Please click the link below to verify your email address:</p>
+                <a href="{verification_url}" style="
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 10px 20px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    border-radius: 5px;
+                ">Verify Email</a>
+                <p>If you didn't request this, please ignore this email.</p>
+            </body>
+            </html>
+            """
+            
+            with get_connection(
+                host=settings.RESEND_SMTP_HOST,
+                port=settings.RESEND_SMTP_PORT,
+                username=settings.RESEND_SMTP_USERNAME,
+                password=os.getenv("RESEND_API_KEY"),
+                use_tls=True,
+            ) as connection:
+                email_msg = EmailMessage(
+                    subject=subject,
+                    body=message,
+                    to=[user.email],
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    connection=connection
+                )
+                email_msg.content_subtype = "html"  # Set content type to HTML
+                email_msg.send()
+                
+            return Response({"status": "success", "message": "Verification email sent"})
+        
+        except CustomUser.DoesNotExist:
+            return Response({"status": "error", "message": "User not found"}, status=404)
 
 
 # ========== Custom Permissions ==========
@@ -511,82 +596,3 @@ class GoogleAuthView(generics.GenericAPIView):
                 {'error': f'An unexpected error occurred: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-# ===== Password Reset =====
-@api_view(['POST'])
-def forgot_password(request):
-    email = request.data.get('email')
-    if not email:
-        return Response({'status': 'error', 'message': 'Email is required'}, status=400)
-
-    try:
-        user = CustomUser.objects.get(email=email)
-    except CustomUser.DoesNotExist:
-        # Do not reveal whether the email exists
-        return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
-
-    # Reuse email_verification_token field to store one-time password reset token
-    user.email_verification_token = str(uuid.uuid4())
-    user.save()
-
-    reset_url = f"{settings.FRONTEND_URL}/reset-password?token={user.email_verification_token}"
-
-    subject = "Reset Your Password"
-    message = f"""
-    <html>
-    <body>
-        <p>We received a request to reset your password.</p>
-        <p>Click the link below to set a new password:</p>
-        <a href="{reset_url}" style="
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;">Reset Password</a>
-        <p>If you did not request this, you can safely ignore this email.</p>
-    </body>
-    </html>
-    """
-
-    try:
-        with get_connection(
-            host=settings.RESEND_SMTP_HOST,
-            port=settings.RESEND_SMTP_PORT,
-            username=settings.RESEND_SMTP_USERNAME,
-            password=os.getenv("RESEND_API_KEY"),
-            use_tls=True,
-        ) as connection:
-            email_msg = EmailMessage(
-                subject=subject,
-                body=message,
-                to=[user.email],
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                connection=connection
-            )
-            email_msg.content_subtype = "html"
-            email_msg.send()
-    except Exception:
-        # Still respond success to avoid user enumeration and UX leakage
-        pass
-
-    return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
-
-
-@api_view(['POST'])
-def reset_password(request):
-    token = request.data.get('token')
-    new_password = request.data.get('new_password')
-    if not token or not new_password:
-        return Response({'status': 'error', 'message': 'token and new_password are required'}, status=400)
-
-    try:
-        user = CustomUser.objects.get(email_verification_token=token)
-    except CustomUser.DoesNotExist:
-        return Response({'status': 'error', 'message': 'Invalid or expired token'}, status=400)
-
-    # Set new password and clear token
-    user.set_password(new_password)
-    user.email_verification_token = None
-    user.save()
-
-    return Response({'status': 'success', 'message': 'Password has been reset successfully'})

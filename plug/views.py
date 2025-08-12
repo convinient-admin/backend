@@ -21,6 +21,7 @@ from .serializers import (
 from rest_framework.views import APIView
 from rest_framework import status, permissions
 from django.contrib.auth import authenticate
+from django.utils.text import slugify
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import CustomUserSerializer
 from .models import CustomUser
@@ -69,9 +70,16 @@ class SignInView(generics.GenericAPIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-        
-        user = authenticate(request, username=email, password=password)
-        
+
+        # Authenticate by email instead of username
+        user = None
+        if email and password:
+            try:
+                existing_user = CustomUser.objects.get(email=email)
+                user = authenticate(request, username=existing_user.username, password=password)
+            except CustomUser.DoesNotExist:
+                user = None
+
         if user is not None:
             if not user.is_verified:
                 return Response(
@@ -442,6 +450,17 @@ class GoogleAuthView(generics.GenericAPIView):
             last_name = idinfo.get('family_name', '')
             picture = idinfo.get('picture', '')
 
+            # Helper to generate a unique username from email or name
+            def generate_unique_username(email_value: str, first: str, last: str) -> str:
+                base = email_value.split('@')[0] if email_value else f"{first}{last}".strip()
+                base = slugify(base) or 'user'
+                candidate = base
+                counter = 0
+                while CustomUser.objects.filter(username=candidate).exists():
+                    counter += 1
+                    candidate = f"{base}{counter}"
+                return candidate
+
             # Check if user exists, or create a new one
             try:
                 user = CustomUser.objects.get(email=email)
@@ -452,12 +471,15 @@ class GoogleAuthView(generics.GenericAPIView):
                     user.last_name = last_name
                 if not user.profile_picture:
                     user.profile_picture = picture
+                if not user.username:
+                    user.username = generate_unique_username(email, first_name, last_name)
                 user.auth_provider = 'google' # Ensure auth_provider is set
                 user.is_verified = True # Ensure user is verified
                 user.save()
             except CustomUser.DoesNotExist:
                 user = CustomUser.objects.create(
                     email=email,
+                    username=generate_unique_username(email, first_name, last_name),
                     first_name=first_name,
                     last_name=last_name,
                     profile_picture=picture,
@@ -489,3 +511,82 @@ class GoogleAuthView(generics.GenericAPIView):
                 {'error': f'An unexpected error occurred: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+# ===== Password Reset =====
+@api_view(['POST'])
+def forgot_password(request):
+    email = request.data.get('email')
+    if not email:
+        return Response({'status': 'error', 'message': 'Email is required'}, status=400)
+
+    try:
+        user = CustomUser.objects.get(email=email)
+    except CustomUser.DoesNotExist:
+        # Do not reveal whether the email exists
+        return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
+
+    # Reuse email_verification_token field to store one-time password reset token
+    user.email_verification_token = str(uuid.uuid4())
+    user.save()
+
+    reset_url = f"{settings.FRONTEND_URL}/reset-password?token={user.email_verification_token}"
+
+    subject = "Reset Your Password"
+    message = f"""
+    <html>
+    <body>
+        <p>We received a request to reset your password.</p>
+        <p>Click the link below to set a new password:</p>
+        <a href="{reset_url}" style="
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;">Reset Password</a>
+        <p>If you did not request this, you can safely ignore this email.</p>
+    </body>
+    </html>
+    """
+
+    try:
+        with get_connection(
+            host=settings.RESEND_SMTP_HOST,
+            port=settings.RESEND_SMTP_PORT,
+            username=settings.RESEND_SMTP_USERNAME,
+            password=os.getenv("RESEND_API_KEY"),
+            use_tls=True,
+        ) as connection:
+            email_msg = EmailMessage(
+                subject=subject,
+                body=message,
+                to=[user.email],
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                connection=connection
+            )
+            email_msg.content_subtype = "html"
+            email_msg.send()
+    except Exception:
+        # Still respond success to avoid user enumeration and UX leakage
+        pass
+
+    return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
+
+
+@api_view(['POST'])
+def reset_password(request):
+    token = request.data.get('token')
+    new_password = request.data.get('new_password')
+    if not token or not new_password:
+        return Response({'status': 'error', 'message': 'token and new_password are required'}, status=400)
+
+    try:
+        user = CustomUser.objects.get(email_verification_token=token)
+    except CustomUser.DoesNotExist:
+        return Response({'status': 'error', 'message': 'Invalid or expired token'}, status=400)
+
+    # Set new password and clear token
+    user.set_password(new_password)
+    user.email_verification_token = None
+    user.save()
+
+    return Response({'status': 'success', 'message': 'Password has been reset successfully'})

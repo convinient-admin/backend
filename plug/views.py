@@ -192,27 +192,6 @@ class ForgotPasswordView(generics.GenericAPIView):
         return Response({'status': 'success', 'message': 'If an account exists, a reset link has been sent'})
 
 
-class ResetPasswordView(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = CustomUserSerializer
-
-    def post(self, request):
-        token = request.data.get('token')
-        new_password = request.data.get('new_password')
-        if not token or not new_password:
-            return Response({'status': 'error', 'message': 'token and new_password are required'}, status=400)
-
-        try:
-            user = CustomUser.objects.get(email_verification_token=token)
-        except CustomUser.DoesNotExist:
-            return Response({'status': 'error', 'message': 'Invalid or expired token'}, status=400)
-
-        # Set new password and clear token
-        user.set_password(new_password)
-        user.email_verification_token = None
-        user.save()
-
-        return Response({'status': 'success', 'message': 'Password has been reset successfully'})
 
 
 class SendVerificationEmailView(generics.GenericAPIView):

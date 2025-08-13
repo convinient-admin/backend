@@ -57,7 +57,6 @@ urlpatterns = [
     path('api/auth/google/signin/', views.GoogleAuthView.as_view(), name='google-signin'),
     path('api/auth/google/signup/', views.GoogleAuthView.as_view(), name='google-signup'),
     path('api/auth/forgot-password/', views.ForgotPasswordView.as_view(), name='forgot-password'),
-    path('api/auth/reset-password/', views.ResetPasswordView.as_view(), name='reset-password'),
     
     # Admin
     path('admin/', admin.site.urls),

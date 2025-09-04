@@ -1,10 +1,7 @@
-## TOP-PLUG-254
-
-# Kenya's Top plug ecommerce site 
 
 
-
-# Core Features to Build
+# E-commerce site 
+# Core Features 
 * User Management: Allow merchants to register, manage their accounts, and access dashboards.
 
 * Storefront Builder: Provide customizable templates and a drag-and-drop editor for storefront creation.
@@ -22,7 +19,7 @@
 * Third-Party App Integrations: Allow plugins for SEO tools, marketing apps, etc.
 
 
-## Slogan : Usikubali kugongwa!Shop at NOBSMART(Logo:TP)
+
 
 
 

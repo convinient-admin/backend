@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-$3mqzjl#^45^#7ioqa)=2lfe3v(d3kz#bq_ly+zh5_80kp!%d(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','backend-hj5j.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','backend-hj5j.onrender.com','backend-ufuo.onrender.com']
 
 AUTH_USER_MODEL = 'plug.CustomUser'
 
